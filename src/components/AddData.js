@@ -1,32 +1,34 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { addField, resetField } from '../actions/index';
-import './AddDataPage.css';
+import './AddData.css';
 
-const AddDataPage = ({ fields, addField }) => {
+const AddData = ({ fields, addField, resetField }) => {
+  // State variables for managing form inputs and dynamic data
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedFieldType, setSelectedFieldType] = useState('');
   const [confirmedData, setConfirmedData] = useState([]);
   const [newField, setNewField] = useState({
     displayName: '',
     dataType: '',
-    maxLength: '',    
+    maxLength: '',
     startDate: '',
     endDate: '',
     isMandatory: '',
     fieldInput: ''
   });
 
+  // State variables for controlling UI and retrieving data
   const [isAddingField, setIsAddingField] = useState(false);
-  const [retrievalData] = useState({
+  const [retrievalData, setRetrievalData] = useState({
     department: '',
     mobileNumber: '',
     dob: '',
     pincode: '',
   });
-
   const [retrievedData, setRetrievedData] = useState([]);
 
+  // Handler for retrieving data based on input values
   const handleRetrieveData = () => {
     const filteredData = confirmedData.filter((data) => {
       return (
@@ -40,10 +42,12 @@ const AddDataPage = ({ fields, addField }) => {
     setRetrievedData(filteredData);
   };
 
+  // Handler for changing the field type selection
   const handleFieldTypeChange = (e) => {
     setSelectedFieldType(e.target.value);
   };
 
+  // Handler for handling input changes in the form
   const handleInputChange = (e) => {
     setNewField({
       ...newField,
@@ -51,24 +55,16 @@ const AddDataPage = ({ fields, addField }) => {
     });
   };
 
+  // Function to validate field input based on data type and constraints
   const isFieldInputValid = () => {
-    
     switch (newField.dataType) {
       case 'string':
         const isMaxLengthValid =
-          !newField.maxLength || 
+          !newField.maxLength ||
           (typeof newField.fieldInput === 'string' &&
             newField.fieldInput.length <= parseInt(newField.maxLength, 10));
-  
+
         return isMaxLengthValid;
-    //   case 'number':
-  
-    //     const isMaxLengthValidForNumber =
-    //       !newField.maxLength ||
-    //       (typeof newField.fieldInput === 'number' &&
-    //         newField.fieldInput.toString().length <= parseInt(newField.maxLength));
-  
-    //     return isMaxLengthValidForNumber;
       case 'date':
         return (
           !isNaN(Date.parse(newField.fieldInput)) &&
@@ -76,106 +72,112 @@ const AddDataPage = ({ fields, addField }) => {
           !isNaN(Date.parse(newField.endDate))
         );
       default:
-        return true; 
+        return true;
     }
   };
-  
 
+  // Handler for adding a new field
   const handleAddField = () => {
-    if(fields.length>=4){
-        alert("Cannot Add More Fileds");
-    }
-    else{
+    if (fields.length >= 4) {
+      alert("Cannot Add More Fields");
+    } else {
+      if (
+        newField.displayName !== '' &&
+        fields.length < 4 &&
+        selectedFieldType !== '' &&
+        isFieldInputValid()
+      ) {
+        if (selectedFieldType === 'date' && newField.dataType !== 'date') {
+          alert('Please choose "Date" as the Data Type when Field Type is Date.');
+          return;
+        }
 
-        if (
-            newField.displayName !== '' &&
-            fields.length < 4 &&
-            selectedFieldType !== '' &&
-            isFieldInputValid()
-            ) {
-                
-                if (selectedFieldType === 'date' && newField.dataType !== 'date') {
-                    alert('Please choose "Date" as the Data Type when Field Type is Date.');
-                    return;
-        }
-        
         if (newField.dataType === 'date') {
-            const inputDate = new Date(newField.fieldInput);
-            const startDate = new Date(newField.startDate);
-            const endDate = new Date(newField.endDate);
-      
-            if (inputDate < startDate || inputDate > endDate) {
-              alert('Please enter a date within the specified range.');
-              return;
-            }
+          const inputDate = new Date(newField.fieldInput);
+          const startDate = new Date(newField.startDate);
+          const endDate = new Date(newField.endDate);
+
+          if (inputDate < startDate || inputDate > endDate) {
+            alert('Please enter a date within the specified range.');
+            return;
+          }
         }
-        
+
         addField({
-            ...newField,
-        type: selectedFieldType,
-    });
-    setNewField({
-        displayName: '',
-        dataType: '',
-        maxLength: '',
-        startDate: '',
-        endDate: '',
-        isMandatory: '',
-        fieldInput: ''
-    });
-    setSelectedFieldType('');
-} else {
-    alert('(Field Input does not match with the selected data type) or (number/string should be in specified range)');
-}
+          ...newField,
+          type: selectedFieldType,
+        });
+
+        // Reset form fields after adding
+        setNewField({
+          displayName: '',
+          dataType: '',
+          maxLength: '',
+          startDate: '',
+          endDate: '',
+          isMandatory: '',
+          fieldInput: ''
+        });
+        setSelectedFieldType('');
+      } else {
+        alert('(Field Input does not match with the selected data type) or (number/string should be in specified range)');
+      }
     }
   };
 
+  // Handler for changing the selected category
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
   };
 
+  // Function to get validation content for each field
   const getValidationContent = (field) => {
     if (field.type === 'text') {
-        return field.maxLength ? `Max Length: ${field.maxLength}` : '';
+      return field.maxLength ? `Max Length: ${field.maxLength}` : '';
     } else if (field.type === 'date') {
-        return field.startDate && field.endDate ? `Between ${field.startDate} and ${field.endDate}` : '';
-    }else if (field.type === 'dropdown') {
-        return 'NIL';
+      return field.startDate && field.endDate ? `Between ${field.startDate} and ${field.endDate}` : '';
+    } else if (field.type === 'dropdown') {
+      return 'NIL';
     }
-    return ''; 
-  };
-  const confirmData = () => {
-    setConfirmedData([...confirmedData, newField]);
-    // variable+=1;
+    return '';
   };
 
+  // Function to confirm and add data to the confirmedData array
+  const confirmData = () => {
+    setConfirmedData([...confirmedData, newField]);
+  };
+
+  // Function to reset fields and redux state
   const resetFields = () => {
-    resetField(); 
+    resetField();
     setConfirmedData([]);
   };
-  
+
+  // Handler for the "Add Field" button click
   const handleAddFieldButtonClick = () => {
     setIsAddingField(true);
   };
 
+  // Handler for canceling field addition
   const handleCancelFieldAddition = () => {
     setIsAddingField(false);
     setSelectedFieldType('');
   };
 
+  // JSX structure for the component
   return (
     <div>
       <div className='category'>
         <div className="labelCategory">
-            <label>Dynamic Data Collection</label>
+          <label>Dynamic Data Collection</label>
         </div>
         <div className='optionsCategory'>
-            <select onChange={handleCategoryChange} value={selectedCategory}>
-             <option value=""> Select Category</option>
-                <option value="student">Student</option>
-                <option value="selfEmployee">Salaried</option>
-                <option value="business">Business</option>
-            </select>
+          <select onChange={handleCategoryChange} value={selectedCategory}>
+            <option value=""> Select Category</option>
+            <option value="student">Student</option>
+            <option value="selfEmployee">Salaried</option>
+            <option value="business">Business</option>
+          </select>
         </div>
       </div>
 
@@ -196,8 +198,9 @@ const AddDataPage = ({ fields, addField }) => {
             <button onClick={handleAddFieldButtonClick}>Add Field</button>
           )}
         </div>
-      )}  
+      )}
 
+      {/* Input form for the "Text" field type */}
     {selectedFieldType === "text" && (
         <div className='dataEntry'>
             <table>
@@ -565,4 +568,4 @@ const mapDispatchToProps = {
   resetField,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(AddDataPage);
+export default connect(mapStateToProps, mapDispatchToProps)(AddData);

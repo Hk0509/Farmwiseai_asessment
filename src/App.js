@@ -1,5 +1,5 @@
 import React from 'react';
-import AddDataPage from './components/AddDataPage';
+import AddDataPage from './components/AddData';
 
 function App() {
   return (
